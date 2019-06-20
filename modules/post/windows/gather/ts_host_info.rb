@@ -85,7 +85,7 @@ class MetasploitModule < Msf::Post
       :type   => 'host.info.user_history',
       :data   => user_history ,
       :update => :unique_data)
-    
+    get_grouphistory(user_history)
   end
 
     # Method for getting domain membership info.
@@ -158,6 +158,118 @@ class MetasploitModule < Msf::Post
       
     end
     return users
+  end
+
+  # Get the group history for each logged on user. 
+  def get_grouphistory(users)
+    known_group_sids = {
+      'S-1-5-113' => 'Local Account',
+      'S-1-5-114' => 'Local Administrator',
+      'S-1-1-0' => 'Everyone',
+      'S-1-5-32-545' => 'Builtin Group',
+      'S-1-5-32-544' => 'Builtin Administrator',
+      'S-1-5-4' => 'Interactive Logon',
+      'S-1-2-0' => 'Local Logon',
+      'S-1-2-1' => 'Console Logon',
+      'S-1-5-11' => 'Authenticated User',
+      'S-1-5-15' => 'This Organization',
+      'S-1-5-13' => 'Terminal Service Logon',
+      'S-1-5-6' => 'Service Logon',
+      'S-1-5-2' => 'Network Logon',
+      'S-1-18-5' => 'Multi Factor Authentication',
+      'S-1-5-32-578' => 'Hyper-V Admins',
+      'S-1-5-9' => 'Domain Controller',
+      'S-1-5-14' => 'Remote Interactive Logon',
+      'S-1-5-17' => 'IUSR',
+      'S-1-5-18' => 'Local System',
+      'S-1-5-19' => 'Local Service',
+      'S-1-5-20' => 'Network Service',
+      'S-1-5-32-546' => 'BuiltIn Guests',
+      'S-1-5-32-547' => 'BuiltIn PowerUser',
+      'S-1-5-32-548' => 'Account Operators',
+      'S-1-5-32-549' => 'Server Operators',
+      'S-1-5-32-550' => 'Printer Operators',
+      'S-1-5-32-551' => 'Backup Operators',
+      'S-1-5-32-555' => 'Remote Desktop',
+      'S-1-16-12288' => 'High Integrity Level',
+      'S-1-18-1' => 'Asserted Identiry',
+      'S-1-5-64-10' => 'NTLM Authentication',
+      'S-1-16-8192' => 'Medium Integrity'
+    }
+
+    dom_known_rids = {
+      '498' => 'Domain Controllers',
+      '500' => 'Machine Administrator',
+      '501' => 'Machine Guest',
+      '502' => 'KRBGT',
+      '512' => 'Domain Admins',
+      '513' => 'Domain Users',
+      '514' => 'Domain Guests',
+      '515' => 'Domain Computer',
+      '516' => 'Domain Controller',
+      '517' => 'Cert Publisher',
+      '518' => 'Schema Administrator',
+      '519' => 'Enterprise Administrators',
+      '520' => 'GPO Creator/Owner',
+      '521' => 'RODC',
+      '522' => 'Clonable Controllers',
+      '525' => 'Protected Users',
+      '526' => 'Key Admins',
+      '527' => 'Enterprise Key Admins',
+      '553' => 'RAS Server',
+      '571' => 'RODC Password Replicator',
+      '572' => 'Denied RODC Password Replicator'
+
+    }
+    reg_key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy'
+    group_history = []
+    users.each do |u|
+      results_table = Rex::Text::Table.new(
+        'Header'     => 'Groups',
+        'Indent'     => 1,
+        'SortIndex'  => 0,
+        'Columns'    => ['Name', 'SID']
+    )
+      print_status("Group Membership for #{u[:account]}")
+      groupmembership_key = "#{reg_key}\\#{u[:sid]}\\GroupMembership"
+      key_vals = registry_enumvals(groupmembership_key)
+      key_vals.each do |g|
+        if g =~/Group\d+/
+          group_sid = registry_getvaldata(groupmembership_key, g)
+          if group_sid =~ /^S-\d-\d+-(\d+-){3,14}\d+$/
+            rid = (group_sid.split("-"))[-1]
+            if dom_known_rids.key?(rid)
+              results_table << [dom_known_rids["#{rid}"], group_sid]
+            else
+              results_table << [dom_known_rids["#{rid}"], group_sid]
+            end
+          else
+            if known_group_sids.key?(group_sid)
+              results_table << [known_group_sids["#{group_sid}"], group_sid]
+            else
+              results_table << [known_group_sids["#{group_sid}"], group_sid]
+            end
+          end
+        end
+      end
+      results_table.to_s.each_line do |l|
+        if l =~ /admin|operator|owner/i
+          print_line("%red#{l.chomp}%clr")
+        elsif l =~ /term|network|service/i
+          print_line("%yel#{l.chomp}%clr")
+        else
+          print_line(l.chomp)
+        end
+      end
+      print_line
+      report_note(
+        :host   => session.session_host,
+        :type   => 'host.info.user_groups',
+        :data   => {
+          :user => u[:account],
+          :data => results_table.to_csv} ,
+        :update => :unique_data)
+    end
   end
 
 

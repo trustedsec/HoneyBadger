@@ -72,7 +72,12 @@ class MetasploitModule < Msf::Post
           print_good("\tPath: #{gpo[:path]}")
           print_line
         end
-        
+        report_note(
+          :host   => session.session_host,
+          :type   => 'host.control.gpo',
+          :data   => { :gpo => applied_gpo },
+          :update => :unique_data
+      )
     end
 
     # checks the audit settings and warns on common tradecraft actions that may be logged. 

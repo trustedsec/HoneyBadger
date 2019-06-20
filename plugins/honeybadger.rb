@@ -3,13 +3,13 @@ class Plugin::HoneyBadger < Msf::Plugin
 
   # Post Exploitation command class
   ################################################################################################
-  class SituationalAwarenessCommandDispatcher
+  class HoneyBadgerCommandDispatcher
 
     include Msf::Auxiliary::Report
     include Msf::Ui::Console::CommandDispatcher
 
     def name
-      "situational_awareness"
+      "HoneyBadger"
     end
 
     def commands
@@ -95,7 +95,18 @@ class Plugin::HoneyBadger < Msf::Plugin
   def initialize(framework, opts)
     super
     if framework.db and framework.db.active
-      add_console_dispatcher(SituationalAwarenessCommandDispatcher)
+      add_console_dispatcher(HoneyBadgerCommandDispatcher)
+
+      banner = %{%yel
+         __   __  _______  __    _  _______  __   __  _______  _______  ______   _______  _______  ______   
+        |  | |  ||       ||  |  | ||       ||  | |  ||  _    ||   _   ||      | |       ||       ||    _ |  
+        |  |_|  ||   _   ||   |_| ||    ___||  |_|  || |_|   ||  |_|  ||  _    ||    ___||    ___||   | ||  
+        |       ||  | |  ||       ||   |___ |       ||       ||       || | |   ||   | __ |   |___ |   |_||_ 
+        |       ||  |_|  ||  _    ||    ___||_     _||  _   | |       || |_|   ||   ||  ||    ___||    __  |
+        |   _   ||       || | |   ||   |___   |   |  | |_|   ||   _   ||       ||   |_| ||   |___ |   |  | |
+        |__| |__||_______||_|  |__||_______|  |___|  |_______||__| |__||______| |_______||_______||___|  |_|
+        %clr}
+      print_line banner
       print_line "Version 0.1-Dev"
       print_line "HoneyBadger plugin loaded."
       print_line "by Carlos Perez (carlos.perez[at]trustedsec.com)"
@@ -105,7 +116,7 @@ class Plugin::HoneyBadger < Msf::Plugin
   end
 
   def cleanup
-    remove_console_dispatcher('situational_awareness')
+    remove_console_dispatcher('HoneyBadger')
   end
 
   def name
