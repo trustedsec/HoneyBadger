@@ -58,7 +58,7 @@ class MetasploitModule < Msf::Post
     queries.each do |q|
         begin
             objects = session.extapi.wmi.query(q[:query],'root\securitycenter2')
-            print_status("Enumerating registed #{q[:product]}")
+            print_status("Enumerating registered #{q[:product]}")
             if objects
               objects[:values].each do |o|
                 print_good("\tName: #{o[0]}")
