@@ -51,7 +51,10 @@ class Plugin::HoneyBadger < Msf::Plugin
         {"mod" => "windows/gather/ts_collect_services", "opt" => nil},
         {"mod" => "windows/gather/ts_ps_controls", "opt" => nil},
         {"mod" => "windows/gather/ts_wsh_controls", "opt" => nil},
-        {"mod" => "windows/gather/ts_wmi_securitycenter", "opt" => nil}]
+        {"mod" => "windows/gather/ts_wmi_securitycenter", "opt" => nil},
+        {"mod" => "windows/gather/ts_check_commandline_logging", "opt" => nil},
+        {"mod" => "windows/gather/ts_collect_pipenames", "opt" => nil},
+        {"mod" => "windows/gather/ts_get_powercycle_times", "opt" => nil}]
 
       if not sessions.empty?
         post_mods.each do |p|
